@@ -1,0 +1,288 @@
+#cloud-config
+autoinstall:
+  version: 1
+  early-commands:
+    - systemctl stop ssh.service
+    - systemctl stop ssh.socket
+  refresh-installer:
+    update: yes
+  keyboard:
+    layout: us
+    variant: ""
+  locale: en_US.UTF-8
+  proxy: null
+  identity:
+    hostname: vagrant
+    password: "$6$vagrant.$sd6r0/OKL.FIGZbhanVkrLassSxoPRv1h5lkISsmBONqaLUGVXkEcD22Ddak5W8JSxeU0VFkU/We1Y7o4hVO/1"
+    username: vagrant
+  network:
+    network:
+      version: 2
+      ethernets:
+        enp0s5:
+          match:
+            name: en*
+          dhcp4: true
+  ssh:
+    allow-pw: true
+    authorized-keys: []
+    install-server: true
+  storage:
+    config:
+      - ptable: gpt
+        path: /dev/sda
+        wipe: superblock
+        preserve: false
+        name: ""
+        grub_device: true
+        type: disk
+        id: disk-sda
+      - device: disk-sda
+        size: 1MB
+        flag: bios_grub
+        number: 1
+        preserve: false
+        grub_device: false
+        type: partition
+        id: partition-0
+      - device: disk-sda
+        size: 2G
+        wipe: superblock
+        flag: ""
+        number: 2
+        preserve: false
+        grub_device: false
+        type: partition
+        id: partition-1
+      - fstype: ext4
+        volume: partition-1
+        preserve: false
+        type: format
+        id: format-0
+      - device: disk-sda
+        size: 49149MB
+        wipe: superblock
+        flag: ""
+        number: 3
+        preserve: false
+        grub_device: false
+        type: partition
+        id: partition-2
+      - name: ubuntu-vg
+        devices:
+          - partition-2
+        preserve: false
+        type: lvm_volgroup
+        id: lvm_volgroup-0
+      - name: lv-root
+        volgroup: lvm_volgroup-0
+        size: 4G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-0
+      - name: lv-home
+        volgroup: lvm_volgroup-0
+        size: 10G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-1
+      - name: lv-tmp
+        volgroup: lvm_volgroup-0
+        size: 1G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-2
+      - name: lv-usr
+        volgroup: lvm_volgroup-0
+        size: 4G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-3
+      - name: lv-var
+        volgroup: lvm_volgroup-0
+        size: 4G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-4
+      - fstype: ext4
+        volume: lvm_partition-1
+        preserve: false
+        type: format
+        id: format-8
+      - fstype: ext4
+        volume: lvm_partition-2
+        preserve: false
+        type: format
+        id: format-9
+      - fstype: ext4
+        volume: lvm_partition-3
+        preserve: false
+        type: format
+        id: format-10
+      - fstype: ext4
+        volume: lvm_partition-4
+        preserve: false
+        type: format
+        id: format-11
+      - fstype: ext4
+        volume: lvm_partition-0
+        preserve: false
+        type: format
+        id: format-12
+      - path: /
+        device: format-12
+        type: mount
+        id: mount-12
+      - name: lv-var-log
+        volgroup: lvm_volgroup-0
+        size: 4G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-5
+      - fstype: ext4
+        volume: lvm_partition-5
+        preserve: false
+        type: format
+        id: format-13
+      - name: lv-var-log-audit
+        volgroup: lvm_volgroup-0
+        size: 4G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-6
+      - fstype: ext4
+        volume: lvm_partition-6
+        preserve: false
+        type: format
+        id: format-14
+      - name: lv-var-tmp
+        volgroup: lvm_volgroup-0
+        size: 4G
+        wipe: superblock
+        preserve: false
+        type: lvm_partition
+        id: lvm_partition-7
+      - fstype: ext4
+        volume: lvm_partition-7
+        preserve: false
+        type: format
+        id: format-15
+      - path: /boot
+        device: format-0
+        type: mount
+        id: mount-0
+      - path: /home
+        device: format-8
+        type: mount
+        id: mount-8
+      - path: /tmp
+        device: format-9
+        type: mount
+        id: mount-9
+      - path: /usr
+        device: format-10
+        type: mount
+        id: mount-10
+      - path: /var
+        device: format-11
+        type: mount
+        id: mount-11
+      - path: /var/log
+        device: format-13
+        type: mount
+        id: mount-13
+      - path: /var/log/audit
+        device: format-14
+        type: mount
+        id: mount-14
+      - path: /var/tmp
+        device: format-15
+        type: mount
+        id: mount-15
+  packages:
+    - build-essential
+    - perl
+    - dkms
+    - net-tools
+    - aide
+  user-data:
+    write_files:
+      - path: /etc/ssh/sshd_config.d/CIS.conf
+        content: |
+          HostbasedAuthentication no
+          PermitEmptyPasswords no
+          IgnoreRhosts yes
+          PermitRootLogin no
+          PermitUserEnvironment no
+          UsePAM yes
+          Banner /etc/issue.net
+          ClientAliveInterval 300
+          ClientAliveCountMax 3
+          LoginGraceTime 60
+          LogLevel INFO
+          MaxAuthTries 4
+          MaxSessions 10
+          MaxStartups 10:30:60
+          Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc
+          KexAlgorithms ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
+          MACs hmac-sha2-512,hmac-sha2-256,hmac-sha1
+        permissions: "0600"
+        owner: root:root
+        defer: true
+      - path: /etc/ssh/sshd_config
+        owner: root:root
+        permissions: "0600"
+      - path: /etc/security/limits.d/cis.conf
+        content: |
+          *     hard   core    0
+        oowner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/cramfs.conf
+        content: |
+          # Disable per security requirements
+          install cramfs /bin/true
+        owner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/freevxfs.conf
+        content: |
+          # Disable per security requirements
+          install freevxfs /bin/true
+        owner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/hfs.conf
+        content: |
+          # Disable per security requirements
+          install hfs /bin/true
+        owner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/hfsplus.conf
+        content: |
+          # Disable per security requirements
+          install hfsplus /bin/true
+        owner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/jffs2.conf
+        content: |
+          # Disable per security requirements
+          install jffs2 /bin/true
+        owner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/udf.conf
+        content: |
+          # Disable per security requirements
+          install udf /bin/true
+        owner: root:root
+        permissions: "0644"
+      - path: /etc/modprobe.d/usb-storage.conf
+        content: |
+          # Disable per security requirements
+          install usb-storage /bin/true
+        owner: root:root
+        permissions: "0644"
